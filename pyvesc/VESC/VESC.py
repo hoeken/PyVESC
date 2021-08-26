@@ -3,13 +3,14 @@ from pyvesc.VESC.messages import *
 import time
 import threading
 from pprint import pprint
-
+import serial.tools.list_ports
+from serial.serialutil import *
+	
 # because people may want to use this library for their own messaging, do not make this a required package
 try:
     import serial
 except ImportError:
     serial = None
-
 
 class VESC(object):
     def __init__(self, serial_port, has_sensor=False, start_heartbeat=True, baudrate=115200, timeout=0.05):
@@ -65,6 +66,29 @@ class VESC(object):
         while not self._stop_heartbeat.isSet():
             time.sleep(0.1)
             self.write(self._alive_msg)
+
+    @staticmethod
+    def get_vesc_serial_ports():
+        ports = serial.tools.list_ports.comports()
+        good_ports = []
+        for port in ports:
+            if '0483:5740' in port.hwid:
+                good_ports.append(port.device)
+
+        return good_ports		    
+
+    @staticmethod
+    def get_vesc_serial_port_by_uuid(uuid):
+        ports = VESC.get_vesc_serial_ports()
+        for port in ports:
+            try:
+                obj = VESC(serial_port = port, start_heartbeat=False)
+                if obj.uuid == uuid:
+                    return port
+            except SerialException as e:
+                print("Error ecountered with port " + port)
+                print(e)
+        return None
 
     def start_heartbeat(self):
         """
