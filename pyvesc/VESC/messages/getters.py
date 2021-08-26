@@ -31,8 +31,8 @@ class GetValues(metaclass=VESCMessage):
     fields = Struct(
         'temp_fet' / Short,
         'temp_motor' / Short,
-        'avg_motor_current' / Int,
-        'avg_input_current' / Int,
+        'avg_motor_current' / Int32sb,
+        'avg_input_current' / Int32sb,
         'avg_id' / Int,
         'avg_iq' / Int,
         'duty_cycle_now' / Short,
