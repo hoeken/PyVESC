@@ -2,6 +2,7 @@ from pyvesc.protocol.interface import encode_request, encode, decode
 from pyvesc.VESC.messages import *
 import time
 import threading
+from pprint import pprint
 
 # because people may want to use this library for their own messaging, do not make this a required package
 try:
@@ -34,15 +35,16 @@ class VESC(object):
         if start_heartbeat:
             self.start_heartbeat()
 
-        # check firmware version and set GetValue fields to old values if pre version 3.xx
-        version = self.get_firmware_version()
-        if int(version.split('.')[0]) < 3:
-            GetValues.fields = pre_v3_33_fields
+        self.version = str(self.get_firmware_version())
+
+        pprint(self.version)
+        self.uuid = self.version.uuid;
 
         # store message info for getting values so it doesn't need to calculate it every time
-        msg = GetValues()
-        self._get_values_msg = encode_request(msg)
-        self._get_values_msg_expected_length = msg._full_msg_size
+        # look at construct.compile(): https://construct.readthedocs.io/en/latest/api/abstract.html#construct.Construct.compile
+        #msg = GetValues()
+        #self._get_values_msg = encode_request(msg)
+        #self._get_values_msg_expected_length = msg._full_msg_size
 
     def __enter__(self):
         return self
@@ -59,7 +61,7 @@ class VESC(object):
         """
         while not self._stop_heartbeat.isSet():
             time.sleep(0.1)
-            self.write(alive_msg)
+            self.write(encode(Alive))
 
     def start_heartbeat(self):
         """
@@ -84,11 +86,27 @@ class VESC(object):
         :param num_read_bytes: number of bytes to read for decoding response
         :return: decoded response from buffer
         """
+        
+        print('write')
+        pprint(data)
+        pprint(num_read_bytes)
+        
         self.serial_port.write(data)
         if num_read_bytes is not None:
-            while self.serial_port.in_waiting <= num_read_bytes:
-                time.sleep(0.000001)  # add some delay just to help the CPU
-            response, consumed = decode(self.serial_port.read(self.serial_port.in_waiting))
+            if num_read_bytes == 0:
+                while not bool(data):
+                    time.sleep(0.001)
+                    while self.serial_port.in_waiting == 0:
+                        time.sleep(0.001)  # add some delay just to help the CPU
+                    data += self.serial_port.read(self.serial_port.in_waiting)
+            else:
+                while self.serial_port.in_waiting <= num_read_bytes:
+                    time.sleep(0.000001)  # add some delay just to help the CPU
+                    data += self.serial_port.read(self.serial_port.in_waiting)
+
+            print('got data')
+            pprint(data)
+            response, consumed = decode(data)
             return response
 
     def set_rpm(self, new_rpm):
@@ -103,6 +121,12 @@ class VESC(object):
         :param new_current: new current in milli-amps for the motor
         """
         self.write(encode(SetCurrent(new_current)))
+
+    def set_brake_current(self, new_current):
+        """
+        :param new_current: new current in milli-amps for the motor brake
+        """
+        self.write(encode(SetCurrentBrake(new_current)))
 
     def set_duty_cycle(self, new_duty_cycle):
         """
@@ -120,11 +144,10 @@ class VESC(object):
         """
         :return: A msg object with attributes containing the measurement values
         """
-        return self.write(self._get_values_msg, num_read_bytes=self._get_values_msg_expected_length)
+        return self.write(self._get_values_msg)
 
     def get_firmware_version(self):
-        msg = GetVersion()
-        return str(self.write(encode_request(msg), num_read_bytes=msg._full_msg_size))
+        return self.write(encode_request(GetVersion()), 0)
 
     def get_rpm(self):
         """
@@ -155,7 +178,3 @@ class VESC(object):
         :return: Current incoming current
         """
         return self.get_measurements().current_in
-
-
-
-

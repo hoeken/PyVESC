@@ -1,7 +1,7 @@
 from pyvesc.protocol.base import VESCMessage
 from pyvesc.protocol.interface import encode
 from pyvesc.VESC.messages import VedderCmd
-
+from construct import *
 
 class SetDutyCycle(metaclass=VESCMessage):
     """ Set the duty cycle.
@@ -9,10 +9,13 @@ class SetDutyCycle(metaclass=VESCMessage):
     :ivar duty_cycle: Value of duty cycle to be set (range [-1e5, 1e5]).
     """
     id = VedderCmd.COMM_SET_DUTY
-    fields = [
-        ('duty_cycle', 'i', 100000)
-    ]
+    fields = Struct(
+        'duty_cycle' / Int
+    )
 
+    scalars = {
+        'duty_cycle' : 100000
+    }
 
 class SetRPM(metaclass=VESCMessage):
     """ Set the RPM.
@@ -20,32 +23,39 @@ class SetRPM(metaclass=VESCMessage):
     :ivar rpm: Value to set the RPM to.
     """
     id = VedderCmd.COMM_SET_RPM
-    fields = [
-        ('rpm', 'i')
-    ]
+    fields = Struct(
+        'rpm' / Int
+    )
 
 
 class SetCurrent(metaclass=VESCMessage):
-    """ Set the current (in milliamps) to the motor.
+    """ Set the current (in amps) to the motor.
 
-    :ivar current: Value to set the current to (in milliamps).
+    :ivar current: Value to set the current to (in amps)
     """
     id = VedderCmd.COMM_SET_CURRENT
-    fields = [
-        ('current', 'i', 1000)
-    ]
+    fields = Struct(
+        'current' / Int
+    )
+    
+    scalars = {
+        'current':  1000
+    }
 
 
 class SetCurrentBrake(metaclass=VESCMessage):
-    """ Set the current brake (in milliamps).
+    """ Set the current brake (in amps).
 
-    :ivar current_brake: Value to set the current brake to (in milliamps).
+    :ivar current_brake: Value to set the current brake to (in amps).
     """
     id = VedderCmd.COMM_SET_CURRENT_BRAKE
-    fields = [
-        ('current_brake', 'i', 1000)
-    ]
-
+    fields = Struct(
+        'current_brake' / Int
+    )
+    
+    scalars = {
+        'current_brake': 1000
+    }
 
 class SetPosition(metaclass=VESCMessage):
     """Set the rotor angle based off of an encoder or sensor
@@ -53,9 +63,13 @@ class SetPosition(metaclass=VESCMessage):
     :ivar pos: Value to set the current position or angle to.
     """
     id = VedderCmd.COMM_SET_POS
-    fields = [
-        ('pos', 'i', 1000000)
-    ]
+    fields = Struct(
+        'pos' / Int
+    )
+
+    scalars = {
+        'pos': 1000000
+    }
 
 
 class SetRotorPositionMode(metaclass=VESCMessage):
@@ -76,9 +90,9 @@ class SetRotorPositionMode(metaclass=VESCMessage):
      DISP_POS_MODE_PID_POS_ERROR = 5
 
      id = VedderCmd.COMM_SET_DETECT
-     fields = [
-         ('pos_mode', 'b')
-     ]
+     fields = Struct(
+         'pos_mode' / Byte
+     )
 
 
 class SetServoPosition(metaclass=VESCMessage):
@@ -88,16 +102,16 @@ class SetServoPosition(metaclass=VESCMessage):
     """
 
     id = VedderCmd.COMM_SET_SERVO_POS
-    fields = [
-        ('servo_pos', 'h', 1000)
-    ]
+    fields = Struct(
+        'servo_pos' / Int16ub
+    )
+
+    scalars = {
+        'servo_pos': 1000
+    }
 
 
 class Alive(metaclass=VESCMessage):
     """Heartbeat signal to keep VESC alive"""
     id = VedderCmd.COMM_ALIVE
-    fields = []
-
-
-# statically save this message because it does not need to be recalculated
-alive_msg = encode(Alive())
+    fields = Struct()

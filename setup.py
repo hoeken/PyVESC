@@ -13,5 +13,5 @@ setup(
   download_url='https://github.com/LiamBindle/PyVESC/tarball/' + VERSION,
   keywords=['vesc', 'VESC', 'communication', 'protocol', 'packet'],
   classifiers=[],
-  install_requires=['crccheck']
+  install_requires=['crccheck','construct']
 )
