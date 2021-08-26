@@ -69,6 +69,10 @@ class VESC(object):
 
     @staticmethod
     def get_vesc_serial_ports():
+        """
+        List all serial ports that match the vendor / product ID for VESC boards
+        :return: a list of serial port path strings
+        """
         ports = serial.tools.list_ports.comports()
         good_ports = []
         for port in ports:
@@ -79,6 +83,11 @@ class VESC(object):
 
     @staticmethod
     def get_vesc_serial_port_by_uuid(uuid):
+        """
+        Get the port for connecting to a VESC identified by its UUID. It can be found on the firmware page of VESC Tool, or by using this library.
+        :param uuid: the uuid as an integer. easiest to pass in as 24 digit hex, eg. 0x000000000000000000000000
+        :return: the string path to the serial port, eg. /dev/ttyACM0
+        """
         ports = VESC.get_vesc_serial_ports()
         for port in ports:
             try:
@@ -114,18 +123,16 @@ class VESC(object):
         :return: decoded response from buffer
         """
         
-        #print('write')
-        #pprint(data)
-        #pprint(num_read_bytes)
-        
         reply = b''
         
         self.serial_port.write(data)
         if num_read_bytes is not None:
-            #for some packets like get version we don't know how long the response will be due to null terminated strings.
+            #for some packets like 'get version' we don't know how long the response will be due to null terminated strings.
             if num_read_bytes == 0:
                 while not bool(reply):
-                    time.sleep(0.001)
+                	# add some delay to wait for the VESC to process
+                	# honestly this whole response handling needs to be reworked since the packet header contains the length of the incoming packet.... delays are just a hack.
+                    time.sleep(0.0005) 
                     while self.serial_port.in_waiting == 0:
                         time.sleep(0.001)  # add some delay just to help the CPU
                     reply += self.serial_port.read(self.serial_port.in_waiting)
@@ -190,7 +197,7 @@ class VESC(object):
         """
         :return: Current applied duty-cycle
         """
-        return self.get_measurements().duty_now
+        return self.get_measurements().duty_cycle_now
 
     def get_v_in(self):
         """
@@ -202,10 +209,10 @@ class VESC(object):
         """
         :return: Current motor current
         """
-        return self.get_measurements().current_motor
+        return self.get_measurements().avg_motor_current
 
     def get_incoming_current(self):
         """
         :return: Current incoming current
         """
-        return self.get_measurements().current_in
+        return self.get_measurements().avg_input_current
