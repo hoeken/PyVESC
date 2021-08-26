@@ -2,14 +2,14 @@ from pyvesc import VESC
 import time
 
 # serial port that VESC is connected to. Something like "COM3" for windows and as below for linux/mac
-serial_port = '/dev/serial/by-id/usb-STMicroelectronics_ChibiOS_RT_Virtual_COM_Port_301-if00'
+serial_port = '/dev/ttyACM1'
 
 
 # a function to show how to use the class with a with-statement
 def run_motor_using_with():
     with VESC(serial_port=serial_port) as motor:
-        print("Firmware: ", motor.get_firmware_version())
-        motor.set_duty_cycle(.02)
+        print("Firmware: ", motor.get_firmware_version(), " / UUID: ", hex(motor.uuid))
+        motor.set_duty_cycle(.1)
 
         # run motor and print out rpm for ~2 seconds
         for i in range(30):
@@ -21,7 +21,7 @@ def run_motor_using_with():
 # a function to show how to use the class as a static object.
 def run_motor_as_object():
     motor = VESC(serial_port=serial_port)
-    print("Firmware: ", motor.get_firmware_version())
+    print("Firmware: ", motor.get_firmware_version(), " / UUID: ", hex(motor.uuid))
 
     # sweep servo through full range
     for i in range(100):
