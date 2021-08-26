@@ -29,22 +29,25 @@ class VESC(object):
         if has_sensor:
             self.serial_port.write(encode(SetRotorPositionMode(SetRotorPositionMode.DISP_POS_OFF)))
 
+        # store message info for getting values so it doesn't need to calculate it every time
+        msg = GetValues()
+        self._get_values_msg = encode_request(msg)
+        self._get_values_msg_expected_length = msg.fields.sizeof()
+
+        #our keepalive message
+        self._alive_msg = encode(Alive())        
+
         self.heart_beat_thread = threading.Thread(target=self._heartbeat_cmd_func)
         self._stop_heartbeat = threading.Event()
 
         if start_heartbeat:
             self.start_heartbeat()
 
-        self.version = str(self.get_firmware_version())
+        # some useful info for identifying the VESC
+        self.firmware_info = self.get_firmware_version()
+        self.version = str(self.firmware_info)
+        self.uuid = self.firmware_info.uuid
 
-        pprint(self.version)
-        self.uuid = self.version.uuid;
-
-        # store message info for getting values so it doesn't need to calculate it every time
-        # look at construct.compile(): https://construct.readthedocs.io/en/latest/api/abstract.html#construct.Construct.compile
-        #msg = GetValues()
-        #self._get_values_msg = encode_request(msg)
-        #self._get_values_msg_expected_length = msg._full_msg_size
 
     def __enter__(self):
         return self
@@ -61,7 +64,7 @@ class VESC(object):
         """
         while not self._stop_heartbeat.isSet():
             time.sleep(0.1)
-            self.write(encode(Alive))
+            self.write(self._alive_msg)
 
     def start_heartbeat(self):
         """
@@ -83,30 +86,32 @@ class VESC(object):
         A write wrapper function implemented like this to try and make it easier to incorporate other communication
         methods than UART in the future.
         :param data: the byte string to be sent
-        :param num_read_bytes: number of bytes to read for decoding response
+        :param num_read_bytes: number of bytes to read for decoding response.  0 for unknown number of bytes
         :return: decoded response from buffer
         """
         
-        print('write')
-        pprint(data)
-        pprint(num_read_bytes)
+        #print('write')
+        #pprint(data)
+        #pprint(num_read_bytes)
+        
+        reply = b''
         
         self.serial_port.write(data)
         if num_read_bytes is not None:
+            #for some packets like get version we don't know how long the response will be due to null terminated strings.
             if num_read_bytes == 0:
-                while not bool(data):
+                while not bool(reply):
                     time.sleep(0.001)
                     while self.serial_port.in_waiting == 0:
                         time.sleep(0.001)  # add some delay just to help the CPU
-                    data += self.serial_port.read(self.serial_port.in_waiting)
+                    reply += self.serial_port.read(self.serial_port.in_waiting)
+            #if we do know, then wait for exactly that # of bytes.
             else:
                 while self.serial_port.in_waiting <= num_read_bytes:
                     time.sleep(0.000001)  # add some delay just to help the CPU
-                    data += self.serial_port.read(self.serial_port.in_waiting)
+                    reply += self.serial_port.read(self.serial_port.in_waiting)
 
-            print('got data')
-            pprint(data)
-            response, consumed = decode(data)
+            response, consumed = decode(reply)
             return response
 
     def set_rpm(self, new_rpm):
@@ -118,13 +123,13 @@ class VESC(object):
 
     def set_current(self, new_current):
         """
-        :param new_current: new current in milli-amps for the motor
+        :param new_current: new current in amps for the motor
         """
         self.write(encode(SetCurrent(new_current)))
 
     def set_brake_current(self, new_current):
         """
-        :param new_current: new current in milli-amps for the motor brake
+        :param new_current: new current in amps for the motor brake
         """
         self.write(encode(SetCurrentBrake(new_current)))
 
@@ -144,7 +149,9 @@ class VESC(object):
         """
         :return: A msg object with attributes containing the measurement values
         """
-        return self.write(self._get_values_msg)
+        #return self.write(self._get_values_msg, self._get_values_msg_expected_length)
+        return self.write(self._get_values_msg, 0)
+
 
     def get_firmware_version(self):
         return self.write(encode_request(GetVersion()), 0)

@@ -29,29 +29,29 @@ class GetValues(metaclass=VESCMessage):
     id = VedderCmd.COMM_GET_VALUES
 
     fields = Struct(
-        'temp_fet' / Int16ub,
-        'temp_motor' / Int16ub,
-        'avg_motor_current' / Int32ub,
-        'avg_input_current' / Int32ub,
-        'avg_id' / Int32ub,
-        'avg_iq' / Int32ub,
-        'duty_cycle_now' / Int16ub,
-        'rpm' / Int32ub,
-        'v_in' / Int16ub,
-        'amp_hours' / Int32ub,
-        'amp_hours_charged' / Int32ub,
-        'watt_hours' / Int32ub,
-        'watt_hours_charged' / Int32ub,
-        'tachometer' / Int32ub,
-        'tachometer_abs' / Int32ub,
+        'temp_fet' / Short,
+        'temp_motor' / Short,
+        'avg_motor_current' / Int,
+        'avg_input_current' / Int,
+        'avg_id' / Int,
+        'avg_iq' / Int,
+        'duty_cycle_now' / Short,
+        'rpm' / Int,
+        'v_in' / Short,
+        'amp_hours' / Int,
+        'amp_hours_charged' / Int,
+        'watt_hours' / Int,
+        'watt_hours_charged' / Int,
+        'tachometer' / Int,
+        'tachometer_abs' / Int,
         'mc_fault_code' / Byte,
-        'pid_pos_now' / Int32ub,
+        'pid_pos_now' / Int,
         'app_controller_id' / Byte,
-        'temp_mos1' / Int16ub,
-        'temp_mos2' / Int16ub,
-        'temp_mos3' / Int16ub,
-        'avg_vd' / Int32ub,
-        'avg_vq' / Int32ub
+        'temp_mos1' / Short,
+        'temp_mos2' / Short,
+        'temp_mos3' / Short,
+        'avg_vd' / Int,
+        'avg_vq' / Int
     )
 
     scalars = {
@@ -61,13 +61,19 @@ class GetValues(metaclass=VESCMessage):
         'avg_input_current': 100,
         'avg_id': 100,
         'avg_iq': 100,
-        'duty_cycle_now': '1000',
+        'duty_cycle_now': 1000,
+        'rpm': 1,
         'v_in': 10,
         'amp_hours': 10000,
         'amp_hours_charged': 10000,
         'watt_hours': 10000,
         'watt_hours_charged': 10000,
-        'pid_pos_now': 1000000
+        'pid_pos_now': 1000000,
+        'temp_mos1': 10,
+        'temp_mos2': 10,
+        'temp_mos3': 10,
+        'avg_vd': 1000,
+        'avg_vq': 1000
     }
 
 class GetRotorPosition(metaclass=VESCMessage):
@@ -81,3 +87,7 @@ class GetRotorPosition(metaclass=VESCMessage):
     fields = Struct(
     	'rotor_pos' / Int32ub
     )
+    
+    scalars = {
+        'rotor_pos': 100000
+    }

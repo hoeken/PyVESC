@@ -44,11 +44,12 @@ class VESCMessage(type):
             instance.can_id = kwargs['can_id']
         else:
             instance.can_id = None
+
         if args:
             if len(args) != len(cls.fields.subcons):
-                raise AttributeError("Expected %u arguments, received %u" % (len(cls.fields), len(args)))
-            for subcon, value in zip(cls.fields.subcons, args):
-                setattr(instance, subcon.name, value)
+                raise AttributeError("Expected %u arguments, received %u" % (len(cls.fields.subcons), len(args)))
+            for subcon, val in zip(cls.fields.subcons, args):
+                setattr(instance, subcon.name, val)
         return instance
 
     @staticmethod
@@ -58,31 +59,33 @@ class VESCMessage(type):
     @staticmethod
     def unpack(msg_bytes):
 
-        print('unpack')
-        pprint(msg_bytes)
+        #print('unpack')
+        #pprint(msg_bytes)
 
         #first byte is our message id
-        msg_id = construct.Byte.parse(msg_bytes)
+        msg_id = Byte.parse(msg_bytes)
         
         #use the magic factory to make our VESCMessage class
-        msg_type = VESCMessage.msg_type(*msg_id)
+        msg = VESCMessage.msg_type(msg_id)
         
         #parse our data, skipping that first byte
-        data = msg_type.fields.parse(msg_bytes[1:])
-        for k, field in enumerate(data):
+        data = msg.fields.parse(msg_bytes[1:])
+        values = []
+        for subcon in msg.fields.subcons:
             try:
                 #some of the float values are multiplied by a scalar and need to be converted back
-                if k in msg_type.scalars:
-                    data[k] = data[k] / msg_type.scalars[k]
+                if subcon.name in msg.scalars:
+                    value = data[subcon.name] / msg.scalars[subcon.name]
+                else:
+                    value = data[subcon.name]
+                values.append(value)
             except (TypeError, IndexError) as e:
-                print("Error ecountered on field " + msg_type.fields[k][0])
+                print("Error ecountered on field " + msg.fields[subcon.name][0])
                 print(e)
 
-        #create a new object and return it?
-        msg = msg_type(*data)
+        msg = msg(*values)
 
         return msg
-
 
     @staticmethod
     def pack(instance, header_only=None):
@@ -109,10 +112,5 @@ class VESCMessage(type):
                     values[subcon.name] = int(getattr(instance, subcon.name) * instance.scalars[subcon.name])
                 else:
                     values[subcon.name] = getattr(instance, subcon.name)
-        
-        print('pack')
-        pprint(fmt)
-        pprint(values)
-        pprint(fmt.build(values))
         
         return fmt.build(values)
