@@ -48,7 +48,7 @@ class VESC(object):
         self.firmware_info = self.get_firmware_version()
         self.version = str(self.firmware_info)
         self.uuid = self.firmware_info.uuid
-
+        self.conf = self.get_motor_conf_simple()
 
     def __enter__(self):
         return self
@@ -145,13 +145,20 @@ class VESC(object):
             response, consumed = decode(reply)
             return response
 
-    def set_rpm(self, new_rpm):
+    def set_erpm(self, erpm):
         """
-        Set the electronic RPM value (a.k.a. the RPM value of the stator)
-        :param new_rpm: new rpm value
+        Set the electronic RPM value (eg. the actual rpm * the number of pairs of poles)
+        :param erpm: new erpm value
         """
-        self.write(encode(SetRPM(new_rpm)))
+        self.write(encode(SetRPM(int(erpm))))
 
+    def set_rpm(self, rpm):
+        """
+        Set the actual RPM (must have correct motor poles # set in VESC Tool)(
+        :param rpm: new rpm value
+        """
+        self.set_erpm(rpm * (self.conf.motor_poles / 2))
+ 
     def set_current(self, new_current):
         """
         :param new_current: new current in amps for the motor
@@ -183,15 +190,23 @@ class VESC(object):
         #return self.write(self._get_values_msg, self._get_values_msg_expected_length)
         return self.write(self._get_values_msg, 0)
 
-
     def get_firmware_version(self):
         return self.write(encode_request(GetVersion()), 0)
 
-    def get_rpm(self):
+    def get_motor_conf_simple(self):
+        return self.write(encode_request(GetMCConfTemp()), 0)
+
+    def get_erpm(self):
         """
-        :return: Current motor rpm
+        :return: Current motor erpm
         """
         return self.get_measurements().rpm
+
+    def get_rpm(self):
+        """
+        :return: Current motor erpm
+        """
+        return self.get_measurements().rpm / (self.conf.motor_poles / 2)
 
     def get_duty_cycle(self):
         """

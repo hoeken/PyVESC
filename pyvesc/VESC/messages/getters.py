@@ -22,7 +22,6 @@ class GetVersion(metaclass=VESCMessage):
     def __str__(self):
         return f"{self.comm_fw_version}.{self.fw_version_major}.{self.fw_version_minor}"
 
-
 class GetValues(metaclass=VESCMessage):
     """ Gets internal sensor data
     """
@@ -75,6 +74,27 @@ class GetValues(metaclass=VESCMessage):
         'avg_vd': 1000,
         'avg_vq': 1000
     }
+
+class GetMCConfTemp(metaclass=VESCMessage):
+    """ Gets a simplified version of the motor config
+    """
+    id = VedderCmd.COMM_GET_MCCONF_TEMP
+
+    fields = Struct(
+        'current_min_scale' / Float32b,
+        'current_max_scale' / Float32b,
+        'min_erpm' / Float32b,
+        'max_erpm' / Float32b,
+        'min_duty' / Float32b,
+        'max_duty' / Float32b,
+        'watt_min' / Float32b,
+        'watt_max' / Float32b,
+        'in_current_min' / Float32b,
+        'in_current_max' / Float32b,
+        'motor_poles' / Byte,
+        'gear_ratio' / Float32b,
+        'wheel_diameter' / Float32b
+    )
 
 class GetRotorPosition(metaclass=VESCMessage):
     """ Gets rotor position data
