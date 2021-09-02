@@ -13,6 +13,37 @@ except ImportError:
     serial = None
 
 class VESC(object):
+
+    fault_codes = (
+        'FAULT_CODE_NONE',
+        'FAULT_CODE_OVER_VOLTAGE',
+        'FAULT_CODE_UNDER_VOLTAGE',
+        'FAULT_CODE_DRV',
+        'FAULT_CODE_ABS_OVER_CURRENT',
+        'FAULT_CODE_OVER_TEMP_FET',
+        'FAULT_CODE_OVER_TEMP_MOTOR',
+        'FAULT_CODE_GATE_DRIVER_OVER_VOLTAGE',
+        'FAULT_CODE_GATE_DRIVER_UNDER_VOLTAGE',
+        'FAULT_CODE_MCU_UNDER_VOLTAGE',
+        'FAULT_CODE_BOOTING_FROM_WATCHDOG_RESET',
+        'FAULT_CODE_ENCODER_SPI',
+        'FAULT_CODE_ENCODER_SINCOS_BELOW_MIN_AMPLITUDE',
+        'FAULT_CODE_ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE',
+        'FAULT_CODE_FLASH_CORRUPTION',
+        'FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_1',
+        'FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_2',
+        'FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_3',
+        'FAULT_CODE_UNBALANCED_CURRENTS',
+        'FAULT_CODE_BRK',
+        'FAULT_CODE_RESOLVER_LOT',
+        'FAULT_CODE_RESOLVER_DOS',
+        'FAULT_CODE_RESOLVER_LOS',
+        'FAULT_CODE_FLASH_CORRUPTION_APP_CFG',
+        'FAULT_CODE_FLASH_CORRUPTION_MC_CFG',
+        'FAULT_CODE_ENCODER_NO_MAGNET'
+    )
+
+
     def __init__(self, serial_port, has_sensor=False, start_heartbeat=True, baudrate=115200, timeout=0.05):
         """
         :param serial_port: Serial device to use for communication (i.e. "COM3" or "/dev/tty.usbmodem0")
@@ -132,9 +163,9 @@ class VESC(object):
                 while not bool(reply):
                 	# add some delay to wait for the VESC to process
                 	# honestly this whole response handling needs to be reworked since the packet header contains the length of the incoming packet.... delays are just a hack.
-                    time.sleep(0.0005) 
+                    time.sleep(0.005) 
                     while self.serial_port.in_waiting == 0:
-                        time.sleep(0.001)  # add some delay just to help the CPU
+                        time.sleep(0.005)  # add some delay just to help the CPU
                     reply += self.serial_port.read(self.serial_port.in_waiting)
             #if we do know, then wait for exactly that # of bytes.
             else:
