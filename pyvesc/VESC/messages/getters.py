@@ -32,10 +32,10 @@ class GetValues(metaclass=VESCMessage):
         'temp_motor' / Short,
         'avg_motor_current' / Int32sb,
         'avg_input_current' / Int32sb,
-        'avg_id' / Int,
-        'avg_iq' / Int,
-        'duty_cycle_now' / Short,
-        'rpm' / Int,
+        'avg_id' / Int32sb,
+        'avg_iq' / Int32sb,
+        'duty_cycle_now' / Int16sb,
+        'rpm' / Int32sb,
         'v_in' / Short,
         'amp_hours' / Int,
         'amp_hours_charged' / Int,
@@ -44,13 +44,13 @@ class GetValues(metaclass=VESCMessage):
         'tachometer' / Int,
         'tachometer_abs' / Int,
         'mc_fault_code' / Byte,
-        'pid_pos_now' / Int,
+        'pid_pos_now' / Int32sb,
         'app_controller_id' / Byte,
         'temp_mos1' / Short,
         'temp_mos2' / Short,
         'temp_mos3' / Short,
-        'avg_vd' / Int,
-        'avg_vq' / Int
+        'avg_vd' / Int32sb,
+        'avg_vq' / Int32sb
     )
 
     scalars = {
